@@ -4,6 +4,9 @@ const Restaurant = require("../models/restaurant");
 const Orders = require("../models/orders");
 const Reviews = require("../models/reviews");
 
+const {customerLogin, updateCustomerProfile, makeOrderCustomer, cancelOrderCustomer, addReview} = require("../mutations/customerMutations");
+const { resolve } = require('path');
+
 const {
     GraphQLObjectType,
     GraphQLString,
@@ -11,7 +14,8 @@ const {
     GraphQLID,
     GraphQLInt,
     GraphQLList,
-    GraphQLNonNull
+    GraphQLNonNull,
+    GraphQLBoolean
 } = graphql;
 
 
@@ -108,6 +112,14 @@ const orderType = new GraphQLObjectType({
     
 })
 
+const ResponseType = new GraphQLObjectType({
+    name: 'Response',
+    fields: () => ({
+        success: { type: GraphQLBoolean },
+        res: { type: GraphQLString }
+    })
+});
+
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     fields: {
@@ -148,6 +160,27 @@ const RootQuery = new GraphQLObjectType({
                     return reviews;
                 }
             }
+        },
+
+        getCustomerReviews:{
+            type: GraphQLList(reviewType),
+            args: {
+                    RID: { type: GraphQLString } ,
+                    CID: { type: GraphQLString } 
+                },
+            async resolve(parent, args){
+                console.log("args".args);
+
+                let reviews = await Reviews.find({restaurantid:args.RID, customerid: args.CID});
+                if(reviews){
+                    console.log("reviews in customerside", reviews);
+                    return reviews;
+                }
+                else{
+                    console.log("order make error", orders);
+                    return reviews;
+                }
+            }    
         },
 
         getRestaurantDishes:{
@@ -209,8 +242,98 @@ const RootQuery = new GraphQLObjectType({
     }
 })
 
+const Mutation = new GraphQLObjectType({
+    name: 'Mutation',
+    fields: {
+
+        customer_login: {
+            type: customerType,
+            args: {
+                username: { type: GraphQLString },
+                password: { type: GraphQLString }
+            },
+            async resolve(parent, args) {
+                return await customerLogin(args);
+            }
+        },
+        customer_update_profile:{
+            type: customerType,
+    
+            args: {
+                name: { type: GraphQLString },
+                dob: { type: GraphQLString }, 
+                emailid: { type: GraphQLString }, 
+                city: { type: GraphQLString }, 
+                state: { type: GraphQLString }, 
+                country: { type: GraphQLString },
+                nickname: { type: GraphQLString }, 
+                headline: { type: GraphQLString }, 
+                phone: { type: GraphQLString }, 
+                blog: { type: GraphQLString }, 
+                yelpingSince: { type: GraphQLString }, 
+                thingsIlove: { type: GraphQLString }, 
+                findMeIn: { type: GraphQLString },
+                CID: { type: GraphQLString }, 
+            },
+            async resolve(parent, args){
+                return updateCustomerProfile(args);
+            }
+        },
+
+    customer_make_order:{
+        type: ResponseType,
+
+        args:{
+            dishname: { type: GraphQLString },
+            dishimage: { type: GraphQLString },
+            option: { type: GraphQLString },
+            price: { type: GraphQLString },
+            category: { type: GraphQLString },
+            customerid: { type: GraphQLString },
+            customername: { type: GraphQLString },
+            restaurantid: { type: GraphQLString },
+            restaurantname: { type: GraphQLString },
+            status: { type: GraphQLString },
+            time: { type: GraphQLString },
+        },
+        async resolve(parent, args){
+            return makeOrderCustomer(args);
+        }
+    },
+    
+    customer_cancel_order:{
+        type:ResponseType,
+
+        args:{
+            orderid: { type: GraphQLString},
+        },
+        async resolve(parent, args){
+            return cancelOrderCustomer(args)
+        }
+    },
+
+    customer_add_review:{
+        type:ResponseType,
+        args:{
+            rating: { type: GraphQLString },
+            review: { type: GraphQLString },
+            reviewdate: { type: GraphQLString },
+            customerid: { type: GraphQLString },
+            customername: { type: GraphQLString },
+            restaurantid: { type: GraphQLString },
+            restaurantname: { type: GraphQLString },
+        },
+        async resolve(parent, args){
+            return addReview(args)
+        }
+    }
+
+
+    },
+
+})
 
 module.exports = new GraphQLSchema({
     query: RootQuery,
-    // mutation: Mutation
+    mutation: Mutation
 });

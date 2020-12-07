@@ -70,11 +70,12 @@ mongoose.connect(mongoDB, options, (err) => {
     }
 });
 var collections = mongoose.connections[0].collections;
-// var names = [];
+var names = [];
 
 Object.keys(collections).forEach(function (k) {
     names.push(k);
 });
+console.log(names)
 
 //GraphQL endpoint
 app.use("/graphql", graphqlHTTP({

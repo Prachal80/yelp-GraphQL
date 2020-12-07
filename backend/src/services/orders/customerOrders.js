@@ -14,7 +14,7 @@ router.post(
 
     console.log("CID", req.body.customerid);
     console.log("RID", req.body.restaurantid);
-    //console.log("%%%%%%%", req.body);
+
     console.log(typeof(req.body.time))
     
     var newOrder = new Orders({
@@ -72,7 +72,7 @@ router.post("/deleteOrderCustomer", (req, res) => {
   Orders.findByIdAndUpdate({_id:req.body.orderid},
     {
         $set:{
-            status:"CSancelled",
+            status:"Cancelled",
     }      
 }).then(order=>{
     console.log("order made", order);

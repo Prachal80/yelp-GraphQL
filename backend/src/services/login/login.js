@@ -11,8 +11,6 @@ const salt = bcrypt.genSaltSync(saltRounds);
 router.post("/",(req,res)=>{
     console.log("Inside Login");
 
-    let hash = bcrypt.hashSync(req.body.password, salt);
-
     if(req.body.userType  === "customer"){
         console.log("Customer Login called", req.body)
         Customer.findOne({ email: req.body.username })
