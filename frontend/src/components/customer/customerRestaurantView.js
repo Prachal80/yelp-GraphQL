@@ -9,6 +9,13 @@ import { BsStarFill } from "react-icons/all";
 import { Map, InfoWindow, Marker, GoogleApiWrapper } from "google-maps-react";
 import OrderEachDish from "../individual/individualOrderDish";
 import EachCustomerReview from "../individual/indivudalReview";
+
+
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {getRestaurantDishes} from "../../queries/queries";
+
 var dotenv = require("dotenv").config({
   path: "../.env",
 });
@@ -51,54 +58,54 @@ class customerRestaurantView extends Component {
 
   componentDidMount() {
     console.log("RID", this.state.restaurantid);
-   
-      //Get All dishes
-      axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/customerDishes/getAllDishes",
-        {
-          params: {},
-        }
-      )
-      .then((response) => {
-        console.log("Received Dishes", response.data.customerDishGet);
-        this.setState({
-          dishes: this.state.dishes.concat(response.data.customerDishGet.dishes),
-        });
-        console.log("State Dishes", this.state.dishes);
-      });
 
-      //Get customer reviews
-    axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/reviews/getCustomerReviews",
-        {
-          params: {
-            CID: localStorage.getItem("CID"),
-            RID: this.state.restaurantid,
-          },
-        }
-      )
-      .then((response) => {
-        console.log("Received All reviews");
 
-        this.setState({
-          reviews: this.state.reviews.concat(response.data.customerReviews),
-        });
-        console.log(this.state.reviews);
+    //get all dishes
+    this.props.client.query({
+      query: getRestaurantDishes,
+    
+      variables: {
+        restaurant_id: this.state.restaurantid
+      }
+    }).then(response => {
+      console.log("Dishes", response.data.getRestaurantDishes);
+      this.setState({
+        dishes: response.data.getRestaurantDishes
       })
-      .catch((response) => {
-        console.log("********** Catch", response);
-        this.setState({
-          ErrorMessage: "Something went wrong while getting all the reviews",
-        });
-      });
+    }).catch(e => {
+      console.log("error", e);
+        console.log(e)
+    })
+   
+    
+    //Get customer reviews
+    // axios
+    //   .get(
+    //     "http://" +
+    //       process.env.REACT_APP_IP +
+    //       ":3001" +
+    //       "/reviews/getCustomerReviews",
+    //     {
+    //       params: {
+    //         CID: localStorage.getItem("CID"),
+    //         RID: this.state.restaurantid,
+    //       },
+    //     }
+    //   )
+    //   .then((response) => {
+    //     console.log("Received All reviews");
+
+    //     this.setState({
+    //       reviews: this.state.reviews.concat(response.data.customerReviews),
+    //     });
+    //     console.log(this.state.reviews);
+    //   })
+    //   .catch((response) => {
+    //     console.log("********** Catch", response);
+    //     this.setState({
+    //       ErrorMessage: "Something went wrong while getting all the reviews",
+    //     });
+    //   });
 
 
   
@@ -379,6 +386,11 @@ class customerRestaurantView extends Component {
   }
 }
 
-export default GoogleApiWrapper({
+const WrappedContainer = GoogleApiWrapper({
   apiKey: "AIzaSyBIRmVN1sk9HHlXxIAg-3_H5oRb2j-TyC4",
 })(customerRestaurantView);
+
+export default compose(
+  withApollo,
+  graphql(getRestaurantDishes , { name: "getRestaurantDishes" }),
+)(WrappedContainer, customerRestaurantView);

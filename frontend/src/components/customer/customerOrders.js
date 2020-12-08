@@ -3,6 +3,14 @@ import axios from "axios";
 import { Redirect } from "react-router";
 import EachOrderCustomer from "../individual/individualPlacedOrders";
 
+
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {getRestaurantOrdersCustomer} from "../../queries/queries";
+// import {updateRestaurantProfile} from "../../mutations/mutations";
+
+
 export class customerOrders extends Component {
   constructor(props) {
     super(props);
@@ -31,26 +39,23 @@ export class customerOrders extends Component {
     axios.defaults.withCredentials = true;
 
     //Get All orders made by a customer
-    axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/customerOrders/getAllOrders",
-        {
-          params: {
-            CID: localStorage.getItem("CID"),
-          },
-        }
-      )
-      .then((response) => {
-        console.log("Received all Orders",response.data.CustomerGetOrder);
 
-        this.setState({
-          orders: this.state.orders.concat(response.data.CustomerGetOrder),
-        });
-        console.log("orders", this.state.orders);
-      });
+    this.props.client.query({
+      query: getRestaurantOrdersCustomer,
+    
+      variables: {
+        customer_id: localStorage.getItem("CID"),
+      }
+    }).then(response => {
+      console.log("Orders", response.data.getRestaurantOrdersCustomer);
+      this.setState({
+        orders: response.data.getRestaurantOrdersCustomer
+      })
+    }).catch(e => {
+      console.log("error", e);
+        console.log(e)
+    })
+
   }
 
   render() {
@@ -202,4 +207,9 @@ export class customerOrders extends Component {
   }
 }
 
-export default customerOrders;
+export default compose(
+  withApollo,
+  graphql(getRestaurantOrdersCustomer, { name: "getRestaurantOrdersCustomer" }),
+  // graphql(restaurant,{name:"restaurant"}),
+  
+)(customerOrders);

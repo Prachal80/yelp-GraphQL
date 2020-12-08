@@ -42,6 +42,7 @@ class CustomerDashboard extends Component {
     this.setState({
       filter: e.target.value,
       searchCriteria: "",
+      pattern:"",
     });
   };
 
@@ -116,20 +117,18 @@ class CustomerDashboard extends Component {
         ) {
           return (
             <EachRestaurant
-              // key={Math.random}
+              key={Math.random()}
               data={eachRestaurant}
             ></EachRestaurant>
           );
         }
       } else if (this.state.pattern !== "") {
         if (
-          eachRestaurant[this.state.searchCriteria]
-            .toLowerCase()
-            .includes(this.state.pattern.toLowerCase())
+          JSON.stringify(eachRestaurant[this.state.searchCriteria]).toLowerCase().includes(this.state.pattern.toLowerCase())
         ) {
           return (
             <EachRestaurant
-              // key={Math.random}
+              key={Math.random()}
               data={eachRestaurant}
             ></EachRestaurant>
           );
@@ -137,7 +136,7 @@ class CustomerDashboard extends Component {
       } else {
         return (
           <EachRestaurant
-            // key={Math.random}
+            key={Math.random()}
             data={eachRestaurant}
           ></EachRestaurant>
         );

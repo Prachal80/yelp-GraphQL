@@ -71,4 +71,14 @@ const updateCustomerProfile= gql`
     }
 `;
 
-export {CustomerLoginMutation,RestaurantLoginMutation,updateRestaurantProfile,updateCustomerProfile} ; 
+const makeOrderCustomer =  gql`
+mutation makeOrderCustomer($dishname: String, $dishimage: String, $option: String, $price: String, $category: String, $customerid: String, $customername: String, $restaurantid: String,$restaurantname: String, $status: String, $time: String){
+    
+    customer_make_order(dishname: $dishname, dishimage: $dishimage, option: $option, price: $price, category: $category, customerid: $customerid, customername: $customername, restaurantid: $restaurantid, restaurantname: $restaurantname, status: $status, time: $time){
+        res,
+        success
+    }
+}
+`;
+
+export {CustomerLoginMutation,RestaurantLoginMutation,updateRestaurantProfile,updateCustomerProfile,makeOrderCustomer} ; 

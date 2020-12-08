@@ -6,7 +6,14 @@ import Card from "react-bootstrap/Card";
 import axios from "axios";
 import M from "materialize-css";
 
-export default class individualOrderDish extends Component {
+
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {makeOrderCustomer} from "../../mutations/mutations";
+
+
+class individualOrderDish extends Component {
   constructor(props) {
     super(props);
 
@@ -37,57 +44,87 @@ export default class individualOrderDish extends Component {
   submitOrder = (e) => {
     //prevent page from refresh
     e.preventDefault();
-    const data = {
-      dishname: this.props.data.dishname,
-      dishimage: this.props.data.image,
-      price: this.props.data.price,
-      category: this.props.data.category,
-      customerid: localStorage.getItem("CID"),
-      restaurantid: this.props.data.restaurantid,
-      status: "Order Received",
-      option: this.state.option,
-      restaurantname: this.props.data.restaurantname,
-      customername: localStorage.getItem("Cname"),
-      time: new Date().toISOString().slice(0, 19).replace("T", " "),
-    };
-
-    //set the with credentials to true
-    axios.defaults.withCredentials = true;
-    //make a post request with the user data
-    console.log("#############", data);
-    if (data.option) {
-      axios
-        .post(
-          "http://" +
-            process.env.REACT_APP_IP +
-            ":3001" +
-            "/customerOrders/makeOrderCustomer",
-          data
-        )
-        .then((response) => {
-          console.log("Status Code : ", response.status);
-          console.log("response, ", response.data.success);
-          if (
-            response.data.success &&
-            localStorage.getItem("user") === "customer"
-          ) {
-            window.location.assign("/customer/orders");
-          }
-        })
-        .catch((response) => {
-          console.log("********** Catch", response);
-          this.setState({
-            authFlag: false,
-            ErrorMessage: "Something went wrong while placing the order",
+    // const data = {
+    //   dishname: this.props.data.dishname,
+    //   dishimage: this.props.data.image,
+    //   price: this.props.data.price,
+    //   category: this.props.data.category,
+    //   customerid: localStorage.getItem("CID"),
+    //   restaurantid: this.props.data.restaurantid,
+    //   status: "Order Received",
+    //   option: this.state.option,
+    //   restaurantname: this.props.data.restaurantname,
+    //   customername: localStorage.getItem("Cname"),
+    //   time: new Date().toISOString().slice(0, 19).replace("T", " "),
+    // };
+    if (this.state.option !== "") {
+    this.props.makeOrderCustomer({
+      variables: {
+        dishname: this.props.data.dishname,
+        dishimage: this.props.data.image,
+        price: this.props.data.price,
+        category: this.props.data.category,
+        customerid: localStorage.getItem("CID"),
+        restaurantid: this.props.data.restaurantid,
+        status: "Order Received",
+        option: this.state.option,
+        restaurantname: this.props.data.restaurantname,
+        customername: localStorage.getItem("Cname"),
+        time: new Date().toISOString().slice(0, 19).replace("T", " "),
+      }
+    }).then(res => {
+      if(res.data){
+        console.log("response",res.data.customer_make_order);
+      }
+    })
+    .catch(err=>{
+      console.log(err)
+    });
+  }
+  else{
+    M.toast({
+            html: "Please select 1 option",
+            classes: "red darken-1",
           });
-        });
-    } else {
-      M.toast({
-        html: "Please select 1 option",
-        classes: "red darken-1",
-      });
-    }
-  };
+  }
+
+  //   //set the with credentials to true
+  //   axios.defaults.withCredentials = true;
+  //   //make a post request with the user data
+  //   console.log("#############", data);
+  //   if (data.option) {
+  //     axios
+  //       .post(
+  //         "http://" +
+  //           process.env.REACT_APP_IP +
+  //           ":3001" +
+  //           "/customerOrders/makeOrderCustomer",
+  //         data
+  //       )
+  //       .then((response) => {
+  //         console.log("Status Code : ", response.status);
+  //         console.log("response, ", response.data.success);
+  //         if (
+  //           response.data.success &&
+  //           localStorage.getItem("user") === "customer"
+  //         ) {
+  //           window.location.assign("/customer/orders");
+  //         }
+  //       })
+  //       .catch((response) => {
+  //         console.log("********** Catch", response);
+  //         this.setState({
+  //           authFlag: false,
+  //           ErrorMessage: "Something went wrong while placing the order",
+  //         });
+  //       });
+  //   } else {
+  //     M.toast({
+  //       html: "Please select 1 option",
+  //       classes: "red darken-1",
+  //     });
+  //   }
+   };
 
   render() {
     return (
@@ -188,3 +225,9 @@ export default class individualOrderDish extends Component {
     );
   }
 }
+
+export default compose(
+  withApollo,
+  graphql(makeOrderCustomer, { name: "makeOrderCustomer" })
+  
+)(individualOrderDish);
