@@ -5,11 +5,17 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Card from "react-bootstrap/Card";
 import axios from "axios";
+
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {updateOrderStatus} from "../../mutations/mutations";
+
 var dotenv = require("dotenv").config({
   path: "../.env",
 });
 
-export default class individualRestaurantOrders extends Component {
+class individualRestaurantOrders extends Component {
   constructor(props) {
     super(props);
 
@@ -42,40 +48,60 @@ export default class individualRestaurantOrders extends Component {
   changeOrder = (e) => {
     //prevent page from refresh
     e.preventDefault();
-    const data = {
-      orderid: this.props.data.orderid,
-      status: this.state.status,
-    };
+    // const data = {
+    //   orderid: this.props.data.orderid,
+    //   status: this.state.status,
+    // };
 
-    //set the with credentials to true
-    axios.defaults.withCredentials = true;
-    //make a post request with the user data
-    console.log("************", data);
-    if (data.status) {
-      axios
-        .post(
-          "http://" +
-            process.env.REACT_APP_IP +
-            ":3001" +
-            "/restaurantOrders/changeOrderStatusRestaurant",
-          data
-        )
-        .then((response) => {
-          console.log("Status Code : ", response.status);
-          console.log("response, ", response.data.success);
-          if (response.data.success) {
-            window.location.assign("/restaurant/orders");
-          }
-        })
-        .catch((response) => {
-          console.log("********** Catch", response);
-          this.setState({
-            ErrorMessage: "Error while making change request",
-          });
-        });
-    } else {
-      alert("Please select the Order status");
-    }
+    if (this.state.status !== "") {
+      console.log("#########",this.props.data)
+    this.props.updateOrderStatus({
+      variables: {
+        orderid:this.props.data._id,
+        status:this.state.status
+      }
+    }).then(res => {
+      if(res.data){
+        console.log("response",res.data);
+      }
+    })
+    .catch(err=>{
+      console.log(err)
+    });
+  }
+  else {
+    alert("Please select the Order status");
+  }
+
+    // //set the with credentials to true
+    // axios.defaults.withCredentials = true;
+    // //make a post request with the user data
+    // console.log("************", data);
+    // if (data.status) {
+    //   axios
+    //     .post(
+    //       "http://" +
+    //         process.env.REACT_APP_IP +
+    //         ":3001" +
+    //         "/restaurantOrders/changeOrderStatusRestaurant",
+    //       data
+    //     )
+    //     .then((response) => {
+    //       console.log("Status Code : ", response.status);
+    //       console.log("response, ", response.data.success);
+    //       if (response.data.success) {
+    //         window.location.assign("/restaurant/orders");
+    //       }
+    //     })
+    //     .catch((response) => {
+    //       console.log("********** Catch", response);
+    //       this.setState({
+    //         ErrorMessage: "Error while making change request",
+    //       });
+    //     });
+    // } else {
+    //   alert("Please select the Order status");
+    // }
   };
 
   showOptions = () => {
@@ -243,3 +269,10 @@ export default class individualRestaurantOrders extends Component {
     );
   }
 }
+
+
+export default compose(
+  withApollo,
+  graphql(updateOrderStatus, { name: "updateOrderStatus" })
+  
+)(individualRestaurantOrders);

@@ -103,7 +103,7 @@ async function updateDish(data){
 
 async function updateOrderStatus(data){
 
-    console.log("Update order status")
+    console.log("Update order status", data)
 
     if (
         data.status === "Order Received" ||
@@ -113,7 +113,7 @@ async function updateOrderStatus(data){
         data.status === "Ready for Pickup" ||
         data.status === "Picked up"
       ) {
-    
+        
         var order = await Orders.findByIdAndUpdate({_id:data.orderid},{
             $set:{
                 status:data.status

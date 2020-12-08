@@ -44,19 +44,7 @@ class individualOrderDish extends Component {
   submitOrder = (e) => {
     //prevent page from refresh
     e.preventDefault();
-    // const data = {
-    //   dishname: this.props.data.dishname,
-    //   dishimage: this.props.data.image,
-    //   price: this.props.data.price,
-    //   category: this.props.data.category,
-    //   customerid: localStorage.getItem("CID"),
-    //   restaurantid: this.props.data.restaurantid,
-    //   status: "Order Received",
-    //   option: this.state.option,
-    //   restaurantname: this.props.data.restaurantname,
-    //   customername: localStorage.getItem("Cname"),
-    //   time: new Date().toISOString().slice(0, 19).replace("T", " "),
-    // };
+
     if (this.state.option !== "") {
     this.props.makeOrderCustomer({
       variables: {

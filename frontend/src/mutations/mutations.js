@@ -81,4 +81,14 @@ mutation makeOrderCustomer($dishname: String, $dishimage: String, $option: Strin
 }
 `;
 
-export {CustomerLoginMutation,RestaurantLoginMutation,updateRestaurantProfile,updateCustomerProfile,makeOrderCustomer} ; 
+const updateOrderStatus = gql`
+    mutation updateOrderStatus($orderid: String, $status: String){
+        change_order_status(orderid: $orderid, status: $status){
+            res,
+            success
+        }
+    }
+`;
+
+
+export {CustomerLoginMutation,RestaurantLoginMutation,updateRestaurantProfile,updateCustomerProfile,makeOrderCustomer, updateOrderStatus} ; 

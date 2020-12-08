@@ -3,7 +3,12 @@ import { Redirect } from "react-router";
 import axios from "axios";
 import EachOrderRestaurant from "../individual/individualRestaurantOrders";
 
-export default class restaurantOrders extends Component {
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {getAllOrders} from "../../queries/queries";
+
+class restaurantOrders extends Component {
   constructor(props) {
     super(props);
 
@@ -30,27 +35,44 @@ export default class restaurantOrders extends Component {
   };
   componentDidMount() {
     axios.defaults.withCredentials = true;
-    console.log("mounting");
-    //Get All orders made by customers to the restaurant
-    axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/restaurantOrders/getAllOrdersRestaurant",
-        {
-          params: {
-            RID: localStorage.getItem("RID"),
-          },
-        }
-      )
-      .then((response) => {
-        console.log("Received all Orders");
 
-        this.setState({
-          orders: this.state.orders.concat(response.data.RestaurantGetOrder),
-        });
-      });
+    //Get All orders made by customers to the restaurant
+
+    this.props.client.query({
+      query: getAllOrders,
+    
+      variables: {
+        restaurant_id: localStorage.getItem("RID"),
+      }
+    }).then(response => {
+      console.log("Orders", response.data.getAllOrders);
+      this.setState({
+        orders: response.data.getAllOrders
+      })
+    }).catch(e => {
+      console.log("error", e);
+        console.log(e)
+    })
+
+    // axios
+    //   .get(
+    //     "http://" +
+    //       process.env.REACT_APP_IP +
+    //       ":3001" +
+    //       "/restaurantOrders/getAllOrdersRestaurant",
+    //     {
+    //       params: {
+    //         RID: localStorage.getItem("RID"),
+    //       },
+    //     }
+    //   )
+    //   .then((response) => {
+    //     console.log("Received all Orders");
+
+    //     this.setState({
+    //       orders: this.state.orders.concat(response.data.RestaurantGetOrder),
+    //     });
+    //   });
   }
 
   render() {
@@ -158,3 +180,12 @@ export default class restaurantOrders extends Component {
     );
   }
 }
+
+
+
+export default compose(
+  withApollo,
+  graphql(getAllOrders, { name: "getAllOrders" }),
+  // graphql(restaurant,{name:"restaurant"}),
+  
+)(restaurantOrders);

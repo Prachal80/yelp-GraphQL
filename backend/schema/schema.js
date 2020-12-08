@@ -409,6 +409,7 @@ const Mutation = new GraphQLObjectType({
             status:{ type: GraphQLString }
         },
         async resolve(parent, args){
+            console.log("khgfadhf   ",args)
             return updateOrderStatus(args)
         }
     }
