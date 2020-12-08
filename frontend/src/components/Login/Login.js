@@ -5,6 +5,9 @@ import { Redirect } from "react-router";
 import logo from "../../img/signup_illustration.png";
 import M from "materialize-css";
 
+import { graphql, compose } from 'react-apollo';
+import { CustomerLoginMutation, RestaurantLoginMutation } from '../../mutations/mutations';
+
 //Define a Login Component
 class Login extends Component {
   //call the constructor method
@@ -51,9 +54,10 @@ class Login extends Component {
       userType: e.target.value,
     });
   };
+
   //submit Login handler to send a request to the node backend
   submitLogin = (e) => {
-    // var headers = new Headers();
+   
     //prevent page from refresh
     e.preventDefault();
     const data = {
@@ -61,11 +65,7 @@ class Login extends Component {
       password: this.state.password,
       userType: this.state.userType,
     };
-    //console.log(data);
 
-    //set the with credentials to true
-    axios.defaults.withCredentials = true;
-    //make a post request with the user data
     if (data.username !== "" && data.password !== "" && data.userType !== "") {
       if (
         !/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
@@ -74,53 +74,65 @@ class Login extends Component {
       ) {
         M.toast({ html: "Invalid email", classes: "#fc2837 red darken-3" });
       } else {
-         return axios
-          .post("http://" + process.env.REACT_APP_IP + ":3001" + "/login", data)
-          .then((response) => {
-            console.log("Status Code : ", response.status);
-            console.log("response, ", response.data);
-            if (response.data.success && data.userType === "customer") {
+        if(data.userType === "customer"){
+          this.props.CustomerLoginMutation({
+            variables: {
+              username: this.state.username,
+              password: this.state.password,
+            }
+          }).then(res => {
+            if(res.data){
+              console.log("response",res.data.customer_login);
               localStorage.setItem("user", "customer");
-              localStorage.setItem("CID", response.data.res._id);
-              localStorage.setItem("Cname", response.data.res.name);
-              localStorage.setItem("Cemail", response.data.res.email);
+              localStorage.setItem("CID", res.data.customer_login._id);
+              localStorage.setItem("Cname", res.data.customer_login.name);
+              localStorage.setItem("Cemail", res.data.customer_login.email);
               window.location.assign("/customer/dashboard");
-              M.toast({
-                html: "Signup success",
-                classes: "green darken-1",
-              });
-            } else if (
-              response.data.success &&
-              data.userType === "restaurant"
-            ) {
-              localStorage.setItem("user", "restaurant");
-              localStorage.setItem("RID", response.data.res._id);
-              localStorage.setItem("Rname", response.data.res.name);
-              localStorage.setItem("Remail", response.data.res.email);
-              window.location.assign("/restaurant/dashboard");
-              M.toast({
-                html: "Signup success",
-                classes: "green darken-1",
-              });
             }
           })
-          .catch((error) => {
-            this.setState({
-              authFlag: false,
-              ErrorMessage: "Invalid Login Credentials",
+          .catch(err=>{
+            console.log(err)
+            M.toast({
+              html: "Invalid credentials",
+              classes: "red darken-1",
             });
           });
+        }
+        else if(data.userType === "restaurant") {
+          this.props.RestaurantLoginMutation({
+            variables: {
+              username: this.state.username,
+              password: this.state.password,
+            }
+      
+          }).then(res => {
+          
+            if(res.data){
+              console.log("response",res.data.restaurant_login);
+              localStorage.setItem("user", "restaurant");
+              localStorage.setItem("RID", res.data.restaurant_login._id);
+              localStorage.setItem("Rname", res.data.restaurant_login.name);
+              localStorage.setItem("Remail", res.data.restaurant_login.email);
+              window.location.assign("/restaurant/dashboard");
+            }
+          })
+          .catch(err=>{
+            console.log(err)
+            M.toast({
+              html: "Invalid credentials",
+              classes: "red darken-1",
+            });
+          });
+        }
       }
-    } else {
-      this.setState({
-        authFlag: false,
-        ErrorMessage: "Please Provide all the details",
-      });
-      M.toast({
-        html: "Please Provide all the details",
-        classes: "red darken-1",
-      });
     }
+    else{
+      M.toast({
+            html: "Please Provide all the details",
+            classes: "red darken-1",
+          });
+    }
+  
   };
 
   render() {
@@ -252,5 +264,9 @@ class Login extends Component {
     );
   }
 }
-//export Login Component
-export default Login;
+export default compose(
+
+  graphql(CustomerLoginMutation, { name: "CustomerLoginMutation" }),
+  graphql(RestaurantLoginMutation,{name: "RestaurantLoginMutation"})
+  
+)(Login);

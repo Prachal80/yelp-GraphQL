@@ -9,6 +9,12 @@ import { Map, InfoWindow, Marker, GoogleApiWrapper } from "google-maps-react";
 import EachDish from "../dish/individualRestaurantDish";
 import { BsStarFill } from "react-icons/all";
 import EachReview from "../individual/indivudalReview";
+
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {restaurant,getRestaurantDishes} from "../queries/queries";
+
 var dotenv = require("dotenv").config({
   path: "../../../../.env",
 });
@@ -48,55 +54,76 @@ class RestaurantDashboard extends Component {
     let data = {
       RID: localStorage.getItem("RID"),
     };
-    axios({
-      url:
-        "http://" +
-        process.env.REACT_APP_IP +
-        ":3001" +
-        "/restaurantProfile/getRestaurantProfile",
-      method: "GET",
-      params: data,
-    }).then((response) => {
-      // console.log("profile details", response.data.profileData[0]);
 
-      let restaurantData = response.data.restaurantProfileData;
+
+
+    this.props.client.query({
+      query: restaurant,
+      //this.props.getOwnerProfile({
+      variables: {
+        _id: data.RID,
+      }
+    }).then(response => {
+      console.log("Restaurant", response.data.restaurant);
       this.setState({
-        name: restaurantData.name,
-        location: restaurantData.location,
-        address: restaurantData.address,
-        state: restaurantData.state,
-        country: restaurantData.country,
-        restaurantdescription: restaurantData.description,
-        timings: restaurantData.timings,
-        email: restaurantData.email,
-        contact: restaurantData.contact,
-        ratings: restaurantData.ratings,
-        method: restaurantData.method,
-        cuisine: restaurantData.cuisine,
-        restaurantProfilePic: restaurantData.restaurantProfilePic,
-      });
-    });
-    //Get All dishes
-    axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/restaurantDishes/getAllDishes",
-        {
-          params: {
-            RID: localStorage.getItem("RID"),
-          },
-        }
-      )
-      .then((response) => {
-        console.log("Received Dishes");
+        name: response.data.restaurant.name,
+        location: response.data.restaurant.location,
+        address: response.data.restaurant.address,
+        state: response.data.restaurant.state,
+        country: response.data.restaurant.country,
+        restaurantdescription: response.data.restaurant.description,
+        timings: response.data.restaurant.timings,
+        email: response.data.restaurant.email,
+        contact: response.data.restaurant.contact,
+        ratings: response.data.restaurant.ratings,
+        method: response.data.restaurant.method,
+        cuisine: response.data.restaurant.cuisine,
+        restaurantProfilePic: response.data.restaurant.restaurantProfilePic,
+      })
+    }).catch(e => {
+      console.log("error", e);
+        console.log(e)
+    })
 
-        this.setState({
-          dishes: this.state.dishes.concat(response.data.restaurantDishGet),
-        });
-        //console.log("Dishes: ", this.state.dishes);
-      });
+
+    //Get All dishes
+
+    this.props.client.query({
+      query: restaurant,
+      //this.props.getOwnerProfile({
+      variables: {
+        _id: data.RID,
+      }
+    }).then(response => {
+      console.log("Restaurant", response.data.getRestaurantDishes);
+      this.setState({
+        dishes: response.data.getRestaurantDishes
+      })
+    }).catch(e => {
+      console.log("error", e);
+        console.log(e)
+    })
+
+    // axios
+    //   .get(
+    //     "http://" +
+    //       process.env.REACT_APP_IP +
+    //       ":3001" +
+    //       "/restaurantDishes/getAllDishes",
+    //     {
+    //       params: {
+    //         RID: localStorage.getItem("RID"),
+    //       },
+    //     }
+    //   )
+    //   .then((response) => {
+    //     console.log("Received Dishes");
+
+    //     this.setState({
+    //       dishes: this.state.dishes.concat(response.data.restaurantDishGet),
+    //     });
+    //     //console.log("Dishes: ", this.state.dishes);
+    //   });
 
     //Get all reviews given to restaurant
     axios
@@ -476,6 +503,13 @@ class RestaurantDashboard extends Component {
     );
   }
 }
-export default GoogleApiWrapper({
+
+const WrappedContainer = GoogleApiWrapper({
   apiKey: "AIzaSyBIRmVN1sk9HHlXxIAg-3_H5oRb2j-TyC4",
 })(RestaurantDashboard);
+
+export default compose(
+  withApollo,
+  graphql(restaurant, { name: "restaurant" }),
+  graphql(getRestaurantDishes,{name:"getRestaurantDishes"}),
+)(WrappedContainer, RestaurantDashboard);

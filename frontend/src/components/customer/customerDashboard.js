@@ -2,8 +2,12 @@ import React, { Component } from "react";
 import axios from "axios";
 import { Redirect } from "react-router";
 import { Map, Marker, GoogleApiWrapper } from "google-maps-react";
-import EachDish from "../individual/individualOrderDish";
 import EachRestaurant from "../individual/individualRestaurants";
+
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {getAllRestaurants} from "../queries/queries";
 
 class CustomerDashboard extends Component {
   constructor(props) {
@@ -57,54 +61,52 @@ class CustomerDashboard extends Component {
   componentDidMount() {
     axios.defaults.withCredentials = true;
 
-    //Get All dishes
-    axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/customerDishes/getAllDishes",
-        {
-          params: {},
-        }
-      )
-      .then((response) => {
-        console.log("Received Dishes", response.data.customerDishGet);
-        this.setState({
-          dishes: this.state.dishes.concat(response.data.customerDishGet.dishes),
-        });
-        console.log("State Dishes", this.state.dishes);
-      });
+    //get all restaurants
 
-    axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/customerDishes/getAllRestaurants",
-        {
-          params: {},
-        }
-      )
-      .then((response) => {
-        console.log("Received All restaurants", response.data.allRestaurants);
-        this.setState({
-          restaurants: this.state.restaurants.concat(
-            response.data.allRestaurants
-          ),
-        });
-      });
-  }
+    this.props.client.query({
+      query: getAllRestaurants,
+      //this.props.getOwnerProfile({
+      variables: {
+        
+      }
+    }).then(response => {
+      console.log("All Restaurants", response.data.getAllRestaurants);
+      this.setState({
+      restaurants: response.data.getAllRestaurants
+      })
+    }).catch(e => {
+      console.log("error", e);
+      // this.setState({
+      //   status: 400
+      // })
+    })
+
+  //   axios
+  //     .get(
+  //       "http://" +
+  //         process.env.REACT_APP_IP +
+  //         ":3001" +
+  //         "/customerDishes/getAllRestaurants",
+  //       {
+  //         params: {},
+  //       }
+  //     )
+  //     .then((response) => {
+  //       console.log("Received All restaurants", response.data.allRestaurants);
+  //       this.setState({
+  //         restaurants: this.state.restaurants.concat(
+  //           response.data.allRestaurants
+  //         ),
+  //       });
+  //     });
+   }
 
   render() {
     let redirectVar = null;
     if (!localStorage.getItem("CID")) {
       redirectVar = <Redirect to="/login" />;
     }
-    let dishAll = this.state.dishes.map((dish) => {
-      return <EachDish key={Math.random} data={dish}></EachDish>;
-    });
-
+   
     let allRestaurants = this.state.restaurants.map((eachRestaurant) => {
       if (this.state.filter !== "") {
         if (
@@ -266,6 +268,11 @@ class CustomerDashboard extends Component {
   }
 }
 
-export default GoogleApiWrapper({
+const WrappedContainer = GoogleApiWrapper({
   apiKey: "AIzaSyBIRmVN1sk9HHlXxIAg-3_H5oRb2j-TyC4",
 })(CustomerDashboard);
+
+export default compose(
+  withApollo,
+  graphql(getAllRestaurants, { name: "getAllRestaurants" }),
+)(WrappedContainer, CustomerDashboard);
