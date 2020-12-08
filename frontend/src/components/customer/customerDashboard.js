@@ -7,7 +7,7 @@ import EachRestaurant from "../individual/individualRestaurants";
 import { resolve } from "url";
 import { graphql, compose, withApollo } from 'react-apollo';
 import { Query } from "react-apollo";
-import {getAllRestaurants} from "../queries/queries";
+import {getAllRestaurants} from "../../queries/queries";
 
 class CustomerDashboard extends Component {
   constructor(props) {

@@ -8,6 +8,13 @@ import Col from "react-bootstrap/Col";
 import { Map, InfoWindow, Marker, GoogleApiWrapper } from "google-maps-react";
 import { BsStarFill } from "react-icons/all";
 
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {restaurant} from "../../queries/queries";
+import {updateRestaurantProfile} from "../../mutations/mutations";
+
+
 class RestaurantProfile extends Component {
   constructor(props) {
     super(props);
@@ -34,43 +41,39 @@ class RestaurantProfile extends Component {
     this.submitUpdate = this.submitUpdate.bind(this);
   }
   componentDidMount() {
-    axios.defaults.withCredentials = true;
-    //make a post request with the user data
+    
+    //make a post request with the Restaurant data
     let data = {
       RID: localStorage.getItem("RID"),
     };
-    axios({
-      url:
-        "http://" +
-        process.env.REACT_APP_IP +
-        ":3001" +
-        "/restaurantProfile/getRestaurantProfile",
-      method: "GET",
-      params: data,
-    }).then((response) => {
-      
-
-      let restaurantData = response.data.restaurantProfileData;
-
-
-      console.log("profile details", restaurantData);
-
+    this.props.client.query({
+      query: restaurant,
+    
+      variables: {
+        _id: data.RID,
+      }
+    }).then(response => {
+      console.log("Restaurant", response.data.restaurant);
       this.setState({
-        name: restaurantData.name,
-        location: restaurantData.location,
-        address: restaurantData.address,
-        state: restaurantData.state,
-        country: restaurantData.country,
-        description: restaurantData.description,
-        timings: restaurantData.timings,
-        email: restaurantData.email,
-        contact: restaurantData.contact,
-        ratings: restaurantData.ratings,
-        method: restaurantData.method,
-        cuisine: restaurantData.cuisine,
-        restaurantProfilePic: restaurantData.restaurantProfilePic,
-      });
-    });
+        name: response.data.restaurant.name,
+        location: response.data.restaurant.location,
+        address: response.data.restaurant.address,
+        state: response.data.restaurant.state,
+        country: response.data.restaurant.country,
+        restaurantdescription: response.data.restaurant.description,
+        timings: response.data.restaurant.timings,
+        email: response.data.restaurant.email,
+        contact: response.data.restaurant.contact,
+        ratings: response.data.restaurant.ratings,
+        method: response.data.restaurant.method,
+        cuisine: response.data.restaurant.cuisine,
+        description: response.data.restaurant.description,
+        restaurantProfilePic: response.data.restaurant.restaurantProfilePic,
+      })
+    }).catch(e => {
+      console.log("error", e);
+        console.log(e)
+    })
   }
   // change handlers to update state variable with the text entered by the user
   ChangeHandler = (e) => {
@@ -83,51 +86,33 @@ class RestaurantProfile extends Component {
   submitUpdate = (e) => {
     //prevent page from refresh
     //e.preventDefault();
-    const data = {
-      name: this.state.name,
-      location: this.state.location,
-      address: this.state.address,
-      state: this.state.state,
-      country: this.state.country,
-      description: this.state.description,
-      timings: this.state.timings,
-      email: this.state.email,
-      contact: this.state.contact,
-      method: this.state.method,
-      restaurantProfilePic: this.state.restaurantProfilePic,
-      cuisine: this.state.cuisine,
-      RID: localStorage.getItem("RID"),
-    };
 
-    //set the with credentials to true
-    axios.defaults.withCredentials = true;
-    //make a post request with the user data
-    console.log("#############", data);
-    axios
-      .post(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/restaurantProfile/updateRestaurantProfile",
-        data
-      )
-      .then((response) => {
-        console.log("Status Code : ", response.status);
-        console.log("response, ", response.data.success);
-        if (
-          response.data.success &&
-          localStorage.getItem("user") === "restaurant"
-        ) {
-          window.location.assign("/restaurant/profile");
-        }
-      })
-      .catch((response) => {
-        console.log("********** Catch", response);
-        this.setState({
-          authFlag: false,
-          ErrorMessage: "Invalid Login Credentials",
-        });
-      });
+    this.props.updateRestaurantProfile({
+      variables: {
+          name: this.state.name,
+          location: this.state.location,
+          address: this.state.address,
+          state: this.state.state,
+          country: this.state.country,
+          description: this.state.description,
+          timings: this.state.timings,
+          email: this.state.email,
+          contact: this.state.contact,
+          method: this.state.method,
+          restaurantProfilePic: this.state.restaurantProfilePic,
+          cuisine: this.state.cuisine,
+          RID: localStorage.getItem("RID")
+      }
+    }).then(res => {
+      if(res.data){
+        console.log("response",res.data.updateRestaurantProfile);
+        
+      }
+    })
+    .catch(err=>{
+      console.log(err)
+    });
+
   };
 
   render() {
@@ -425,6 +410,14 @@ class RestaurantProfile extends Component {
     );
   }
 }
-export default GoogleApiWrapper({
+
+const WrappedContainer = GoogleApiWrapper({
   apiKey: "AIzaSyBIRmVN1sk9HHlXxIAg-3_H5oRb2j-TyC4",
 })(RestaurantProfile);
+
+export default compose(
+  withApollo,
+  graphql(updateRestaurantProfile, { name: "updateRestaurantProfile" }),
+  graphql(restaurant,{name:"restaurant"}),
+  
+)(WrappedContainer, RestaurantProfile);

@@ -4,6 +4,13 @@ import { Redirect } from "react-router";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+
+import { resolve } from "url";
+import { graphql, compose, withApollo } from 'react-apollo';
+import { Query } from "react-apollo";
+import {customer} from "../../queries/queries";
+import {updateCustomerProfile} from "../../mutations/mutations";
+
 var dotenv = require("dotenv").config({
   path: "../.env",
 });
@@ -35,46 +42,44 @@ class CustomerProfile extends Component {
     this.submitUpdate = this.submitUpdate.bind(this);
   }
   componentDidMount() {
-    axios.defaults.withCredentials = true;
+
     //make a get request for the user data
     console.log("inside compo did mount");
     let data = {
       CID: localStorage.getItem("CID"),
     };
     console.log("cid ", data);
-    axios({
-      url:
-        "http://" +
-        process.env.REACT_APP_IP +
-        ":3001" +
-        "/customerProfile/getCustomerProfile",
-      method: "GET",
-      params: data,
-    }).then((response) => {
 
-      let customerData = response.data.profileData;
-      console.log("Customer Data", customerData);
+    this.props.client.query({
+      query: customer,
+    
+      variables: {
+        _id: data.CID,
+      }
+    }).then(response => {
+      console.log("Customer", response.data.customer);
       this.setState({
-        name: customerData.name,
-        dob: customerData.birthdate,
-        city: customerData.city,
-        state: customerData.state,
-        country: customerData.country,
-        nickname: customerData.nickname,
-        headline: customerData.headline,
-        phone: customerData.phone,
-        emailid: customerData.email,
-        blog: customerData.blog,
-        yelpingSince: customerData.yelpingSince,
-        thingsIlove: customerData.thingsIlove,
-        findMeIn: customerData.findMeIn,
-        imagePath: customerData.profilePic,
-      });
-    }).catch((error)=>{
-      console.log(error);
-    });
-  
+        name: response.data.customer.name,
+        birthdate: response.data.customer.birthdate,
+        city: response.data.customer.city,
+        state: response.data.customer.state,
+        country: response.data.customer.country,
+        nickname: response.data.customer.nickname,
+        headline: response.data.customer.headline,
+        phone: response.data.customer.phone,
+        email: response.data.customer.email,
+        blog: response.data.customer.blog,
+        yelpingSince: response.data.customer.yelpingSince,
+        thingsIlove: response.data.customer.thingsIlove,
+        findMeIn: response.data.customer.findMeIn,
+        imagePath: response.data.customer.profilePic,
+      })
+    }).catch(e => {
+      console.log("error", e);
+        console.log(e)
+    })
   }
+  
   // change handlers to update state variable with the text entered by the user
   ChangeHandler = (e) => {
     this.setState({
@@ -86,52 +91,34 @@ class CustomerProfile extends Component {
   submitUpdate = (e) => {
     //prevent page from refresh
     //e.preventDefault();
-    const data = {
+
+  this.props.updateCustomerProfile({
+    variables: {
       name: this.state.name,
       dob: this.state.dob,
-      emailid: this.state.emailid,
       city: this.state.city,
       state: this.state.state,
       country: this.state.country,
       nickname: this.state.nickname,
       headline: this.state.headline,
       phone: this.state.phone,
+      emailid: this.state.email,
       blog: this.state.blog,
       yelpingSince: this.state.yelpingSince,
       thingsIlove: this.state.thingsIlove,
       findMeIn: this.state.findMeIn,
-      CID: localStorage.getItem("CID"),
-    };
-    console.log(data);
-    //set the with credentials to true
-    axios.defaults.withCredentials = true;
-    //make a post request with the user data
-    if (data) {
-      axios
-        .post(
-          "http://" +
-            process.env.REACT_APP_IP +
-            ":3001" +
-            "/customerProfile/updateCustomerProfile",
-          data
-        )
-        .then((response) => {
-          console.log("Status Code : ", response.status);
-          console.log("response, ", response.data.success);
-          if (
-            response.data.success 
-             && localStorage.getItem("user") === "customer"
-          ) {
-            window.location.assign("/customer/profile");
-          }
-        })
-        .catch((response) => {
-          this.setState({
-            authFlag: false,
-            ErrorMessage: "Something went wrong",
-          });
-        });
+      // imagePath: this.state.profilePic,
+      CID: localStorage.getItem("CID")
     }
+  }).then(res => {
+    if(res.data){
+      console.log("response",res.data.updateCustomerProfile);
+    }
+  })
+  .catch(err=>{
+    console.log(err)
+  });
+
   };
 
   render() {
@@ -451,4 +438,9 @@ class CustomerProfile extends Component {
   }
 }
 
-export default CustomerProfile;
+export default compose(
+  withApollo,
+  graphql(updateCustomerProfile, { name: "updateCustomerProfile" }),
+  graphql(customer,{name:"customer"}),
+  
+)(CustomerProfile);

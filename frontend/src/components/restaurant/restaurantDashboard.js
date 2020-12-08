@@ -13,7 +13,7 @@ import EachReview from "../individual/indivudalReview";
 import { resolve } from "url";
 import { graphql, compose, withApollo } from 'react-apollo';
 import { Query } from "react-apollo";
-import {restaurant,getRestaurantDishes} from "../queries/queries";
+import {restaurant, getRestaurantDishes, getRestaurantReviews} from "../../queries/queries";
 
 var dotenv = require("dotenv").config({
   path: "../../../../.env",
@@ -49,7 +49,7 @@ class RestaurantDashboard extends Component {
   }
 
   componentDidMount() {
-    axios.defaults.withCredentials = true;
+    
     //make a post request with the Restaurant data
     let data = {
       RID: localStorage.getItem("RID"),
@@ -59,7 +59,7 @@ class RestaurantDashboard extends Component {
 
     this.props.client.query({
       query: restaurant,
-      //this.props.getOwnerProfile({
+    
       variables: {
         _id: data.RID,
       }
@@ -78,6 +78,7 @@ class RestaurantDashboard extends Component {
         ratings: response.data.restaurant.ratings,
         method: response.data.restaurant.method,
         cuisine: response.data.restaurant.cuisine,
+        description: response.data.restaurant.description,
         restaurantProfilePic: response.data.restaurant.restaurantProfilePic,
       })
     }).catch(e => {
@@ -89,13 +90,13 @@ class RestaurantDashboard extends Component {
     //Get All dishes
 
     this.props.client.query({
-      query: restaurant,
-      //this.props.getOwnerProfile({
+      query: getRestaurantDishes,
+    
       variables: {
-        _id: data.RID,
+        restaurant_id: data.RID,
       }
     }).then(response => {
-      console.log("Restaurant", response.data.getRestaurantDishes);
+      console.log("Dishes", response.data.getRestaurantDishes);
       this.setState({
         dishes: response.data.getRestaurantDishes
       })
@@ -104,54 +105,25 @@ class RestaurantDashboard extends Component {
         console.log(e)
     })
 
-    // axios
-    //   .get(
-    //     "http://" +
-    //       process.env.REACT_APP_IP +
-    //       ":3001" +
-    //       "/restaurantDishes/getAllDishes",
-    //     {
-    //       params: {
-    //         RID: localStorage.getItem("RID"),
-    //       },
-    //     }
-    //   )
-    //   .then((response) => {
-    //     console.log("Received Dishes");
-
-    //     this.setState({
-    //       dishes: this.state.dishes.concat(response.data.restaurantDishGet),
-    //     });
-    //     //console.log("Dishes: ", this.state.dishes);
-    //   });
-
+   
     //Get all reviews given to restaurant
-    axios
-      .get(
-        "http://" +
-          process.env.REACT_APP_IP +
-          ":3001" +
-          "/reviews/getRestaurantReviews",
-        {
-          params: {
-            RID: localStorage.getItem("RID"),
-          },
+    
+      this.props.client.query({
+        query: getRestaurantReviews,
+       
+        variables: {
+          restaurant_id: data.RID,
         }
-      )
-      .then((response) => {
-        console.log("Received All reviews");
-
+      }).then(response => {
+        console.log("Reviews", response.data.getRestaurantReviews);
         this.setState({
-          reviews: this.state.reviews.concat(response.data.restaurantReviews),
-        });
-        console.log(this.state.reviews);
+          reviews: response.data.getRestaurantReviews
+        })
+      }).catch(e => {
+        console.log("error", e);
+          console.log(e)
       })
-      .catch((response) => {
-        console.log("********** Catch", response);
-        this.setState({
-          ErrorMessage: "Something went wrong while getting all the reviews",
-        });
-      });
+
   }
 
   submitUpdate = (e) => {
@@ -193,7 +165,7 @@ class RestaurantDashboard extends Component {
           console.log("Status Code : ", response.status);
           console.log("response, ", response.data.success);
           if (response.data.success) {
-            window.location.reload(true);
+            window.location.reload();
           }
         })
         .catch((response) => {
@@ -512,4 +484,5 @@ export default compose(
   withApollo,
   graphql(restaurant, { name: "restaurant" }),
   graphql(getRestaurantDishes,{name:"getRestaurantDishes"}),
+  graphql(getRestaurantReviews,{name:"getRestaurantReviews"}),
 )(WrappedContainer, RestaurantDashboard);
