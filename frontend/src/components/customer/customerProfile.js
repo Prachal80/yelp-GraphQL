@@ -133,7 +133,7 @@ class CustomerProfile extends Component {
           <div class="row" style={{ backgroundColor: "" }}>
             <img
               src={
-                "http://" +
+                "http: //" +
                 process.env.REACT_APP_IP +
                 ":3001/" +
                 this.state.imagePath
@@ -188,7 +188,7 @@ class CustomerProfile extends Component {
           <hr />
           <br />
           <br />
-          <div>
+          {/* <div>
             <form
               action="http://localhost:3001/customerProfile/updateCustomerProfilePic"
               method="POST"
@@ -229,7 +229,7 @@ class CustomerProfile extends Component {
               <br />
               <br />
             </form>
-          </div>
+          </div> */}
           <div class="wrapper fadeInDown">
             <div
               style={{
